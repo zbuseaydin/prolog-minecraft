@@ -132,17 +132,28 @@ add_action(AgentX, AgentY, X, Y, Actions, Count, DepthLimit, ActionList) :-
 
 % 10 points
 % chop_nearest_tree(+State, -ActionList) :- .
-
-
+chop_nearest_tree(State, ActionList) :- 
+    find_nearest_type(State, tree, _, Object, Distance),
+    get_dict(x, Object, ObjX), get_dict(y, Object, ObjY),
+    navigate_to(State, ObjX, ObjY, Actions, Distance),
+    append(Actions, [left_click_c, left_click_c, left_click_c, left_click_c], ActionList).
 
 % 10 points
 % mine_nearest_stone(+State, -ActionList) :- .
-
+mine_nearest_stone(State, ActionList) :- 
+    find_nearest_type(State, stone, _, Object, Distance),
+    get_dict(x, Object, ObjX), get_dict(y, Object, ObjY),
+    navigate_to(State, ObjX, ObjY, Actions, Distance),
+    append(Actions, [left_click_c, left_click_c, left_click_c, left_click_c], ActionList).
 
 
 % 10 points
 % gather_nearest_food(+State, -ActionList) :- .
-
+gather_nearest_food(State, ActionList) :- 
+    find_nearest_type(State, food, _, Object, Distance),
+    get_dict(x, Object, ObjX), get_dict(y, Object, ObjY),
+    navigate_to(State, ObjX, ObjY, Actions, Distance),
+    append(Actions, [left_click_c], ActionList).
 
 
 % 10 points
