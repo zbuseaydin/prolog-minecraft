@@ -276,7 +276,7 @@ fill_map([[X,Y,Type]|L],[A,S],[An,Sn],Id):-
     fill_map(L,[A,Sn_],[An,Sn],Id_),!.
 
 read_file(Objects,[X,Y]):-
-    open('map.txt', read, File),
+    open('map-medium.txt', read, File),
     read_lines(File, Objects, -1,[X,Y]),
     close(File).
 

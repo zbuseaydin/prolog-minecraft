@@ -160,6 +160,55 @@ gather_nearest_food(State, ActionList) :-
 % collect_requirements(+State, +ItemType, -ActionList) :- .
 
 
+%item_info(stick, reqs{log: 2}, 4).
+%item_info(stone_pickaxe, reqs{log: 3, stick: 2, cobblestone: 3}, 100).
+%item_info(stone_axe, reqs{log: 3, stick: 2, cobblestone: 3}, 100).
+
+item_info(stick, reqs{log: 2, stick: 0, cobblestone:0}, 4).
+required(stick, [tree-1, stone-0]).
+required(stone_pickaxe, [tree-2, stone-1]).
+required(stone_axe, [tree-2, stone-1]).
+
+collect_requirements(State, ItemType, ActionList) :- 
+    [AgentDict, _, _] = State,
+    check_and_get_needs(State, ItemType, AgentDict.inventory, ActionList).
+
+check_if_collect_necessary([AgentDict, _, _], ItemType, ActionList) :-
+    item_info(ItemType, Reqs, _),
+    get_dict(log, Reqs, LogVal),
+    get_dict(stick, Reqs, StickVal),
+    get_dict(cobblestone, Reqs, CobblestoneVal),
+    has(log, LogVal, AgentDict.inventory),
+    has(stick, StickVal, AgentDict.inventory),
+    has(cobblestone, CobblestoneVal, AgentDict.inventory),
+    ActionList = [].
+
+check_and_get_needs(State, ItemType, Inv, Actions) :-
+    check_if_collect_necessary(State, ItemType, Actions).
+
+check_and_get_needs(State, ItemType, Inv, Actions) :-
+    required(ItemType, [_-TreeVal, _-StoneVal]),
+    get_needs(State, TreeVal, StoneVal, [], WholeActions),
+    Actions = WholeActions.
+
+get_needs(State, 0, 0, CollectActions, WholeActions):-
+    WholeActions=CollectActions.
+
+get_needs(State, NumTree, NumStone, CollectActions, WholeActions):-
+    NumTree>0,
+    chop_nearest_tree(State, Actions),
+    append(CollectActions, Actions, NewCollectActions),
+    execute_actions(State, Actions, NextState),
+    NewNumTree is NumTree-1,
+    get_needs(NextState, NewNumTree, NumStone, NewCollectActions, WholeActions).
+
+get_needs(State, NumTree, NumStone, CollectActions, WholeActions):-
+    NumStone>0,
+    mine_nearest_stone(State, Actions),
+    append(CollectActions, Actions, NewCollectActions),
+    execute_actions(State, Actions, NextState),
+    NewNumStone is NumStone-1,
+    get_needs(NextState, NumTree, NewNumStone, NewCollectActions, WholeActions).
 
 % 5 points
 % find_castle_location(+State, -XMin, -YMin, -XMax, -YMax) :- .
