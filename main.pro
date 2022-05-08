@@ -1,4 +1,4 @@
-% name surname
+% zeynep buse aydin
 % studentid
 % compiling: no
 % complete: no
@@ -89,7 +89,7 @@ add_action(AgentX, AgentY, X, Y, Actions, Count, DepthLimit, ActionList) :-
     AgentY = Y,
     ActionList = Actions.
 
-% if the agent is in the left of the given coordinat, s/he must go right
+% if the agent is in the left of the given coordinat, adds go_right to the ActionList
 add_action(AgentX, AgentY, X, Y, Actions, Count, DepthLimit, ActionList) :-
     DepthLimit >= Count,
     AgentX < X,
@@ -98,7 +98,7 @@ add_action(AgentX, AgentY, X, Y, Actions, Count, DepthLimit, ActionList) :-
     NewCount is Count+1,
     add_action(NewAgentX, AgentY, X, Y, NewActions, NewCount, DepthLimit, ActionList).
 
-% if the agent is in the right of the given coordinat, s/he must go left
+% if the agent is in the right of the given coordinat, adds go_left to the ActionList
 add_action(AgentX, AgentY, X, Y, Actions, Count, DepthLimit, ActionList) :-
     DepthLimit >= Count,
     AgentX > X,
@@ -107,6 +107,7 @@ add_action(AgentX, AgentY, X, Y, Actions, Count, DepthLimit, ActionList) :-
     NewCount is Count+1,
     add_action(NewAgentX, AgentY, X, Y, NewActions, NewCount, DepthLimit, ActionList).
 
+% if the agent is above the given coordinat, adds go_down to the ActionList
 add_action(AgentX, AgentY, X, Y, Actions, Count, DepthLimit, ActionList) :-
     DepthLimit >= Count,
     AgentY < Y,
@@ -115,6 +116,7 @@ add_action(AgentX, AgentY, X, Y, Actions, Count, DepthLimit, ActionList) :-
     NewCount is Count+1,
     add_action(AgentX, NewAgentY, X, Y, NewActions, NewCount, DepthLimit, ActionList).
 
+% if the agent is below the given coordinat, adds go_up to the ActionList
 add_action(AgentX, AgentY, X, Y, Actions, Count, DepthLimit, ActionList) :-
     DepthLimit >= Count,
     AgentY > Y,
@@ -142,6 +144,7 @@ mine_nearest_stone(State, ActionList) :-
     navigate_to(State, ObjX, ObjY, Actions, Distance),
     append(Actions, [left_click_c, left_click_c, left_click_c, left_click_c], ActionList).
 
+% this predicate is used in collect_requirements
 mine_nearest_cobblestone(State, ActionList) :- 
     find_nearest_type(State, cobblestone, _, Object, Distance),
     get_dict(x, Object, ObjX), get_dict(y, Object, ObjY),
@@ -165,185 +168,8 @@ gather_nearest_food(State, ActionList) :-
 %item_info(stone_pickaxe, reqs{log: 3, stick: 2, cobblestone: 3}, 100).
 %item_info(stone_axe, reqs{log: 3, stick: 2, cobblestone: 3}, 100).
 
-get_needs(State, stick, ActionList, NewCollectActions) :-
-    chop_nearest_tree(State, Actions),
-    append(ActionList, Actions, NewCollectActions).
-
-get_needs(State, stone_pickaxe, ActionList, NewCollectActions) :-
-    chop_nearest_tree(State, Actions),
-    append(ActionList, Actions, ActionList2),
-    execute_actions(State, Actions, NextState),
-    chop_nearest_tree(NextState, Actions2),
-    append(ActionList2, Actions2, ActionList3),
-    append(ActionList3, [craft_stick], ActionList4),
-    execute_actions(NextState, Actions2, NextState2),
-    (mine_nearest_stone(NextState2, Actions3); (
-        mine_nearest_cobblestone(NextState2, Actions4),
-        execute_actions(NextState2, Actions4, NextState3),
-        mine_nearest_cobblestone(NextState3, Actions5),
-        execute_actions(NextState3, Actions5, NextState4),
-        append(Actions4, Actions5, Actions7),
-        mine_nearest_cobblestone(NextState4, Actions6),
-        append(Actions6, Actions7, Actions3)
-        )
-    ),
-    append(ActionList4, Actions3, NewCollectActions).
-
-get_needs(State, stone_axe, ActionList, NewCollectActions) :-
-    chop_nearest_tree(State, Actions),
-    append(ActionList, Actions, ActionList2),
-    execute_actions(State, Actions, NextState),
-    chop_nearest_tree(NextState, Actions2),
-    append(ActionList2, Actions2, ActionList3),
-    append(ActionList3, [craft_stick], ActionList4),
-    execute_actions(NextState, Actions2, NextState2),
-    (mine_nearest_stone(NextState2, Actions3); (
-        mine_nearest_cobblestone(NextState2, Actions4),
-        execute_actions(NextState2, Actions4, NextState3),
-        mine_nearest_cobblestone(NextState3, Actions5),
-        execute_actions(NextState3, Actions5, NextState4),
-        append(Actions4, Actions5, Actions7),
-        mine_nearest_cobblestone(NextState4, Actions6),
-        append(Actions6, Actions7, Actions3)
-        )
-    ),
-    append(ActionList4, Actions3, NewCollectActions).
-
-get_needs(State, castle, ActionList, NewCollectActions) :-
-    mine(State, Actions1),
-    append(ActionList, Actions1, TempActions),
-    execute_actions(State, Actions1, NextState),
-    mine(NextState, Actions2),
-    append(TempActions, Actions2, TempActions2),
-    execute_actions(NextState, Actions2, FinalState),
-    mine(FinalState, Actions3),
-    append(TempActions2, Actions3, NewCollectActions).
-
-collect_not_necessary([AgentDict, _, _], stick, ActionList) :-
-    has(log, 2, AgentDict.inventory),
-    ActionList = [].
-
-collect_not_necessary([AgentDict, _, _], stone_pickaxe, ActionList) :-
-    has(log, 3, AgentDict.inventory),
-    has(stick, 2, AgentDict.inventory),
-    has(cobblestone, 3, AgentDict.inventory),
-    ActionList = [].
-
-collect_not_necessary([AgentDict, _, _], stone_axe, ActionList) :-
-    has(log, 3, AgentDict.inventory),
-    has(stick, 2, AgentDict.inventory),
-    has(cobblestone, 3, AgentDict.inventory),
-    ActionList = [].
-
-collect_not_necessary([AgentDict, _, _], castle, ActionList) :-
-    has(cobblestone, 9, AgentDict.inventory),
-    ActionList = [].
-
-check_and_get_needs(State, stick, ActionList) :-
-    collect_not_necessary(State, stick, ActionList).
-
-check_and_get_needs(State, stick, ActionList) :-
-    get_needs(State, stick, [], ActionList).
-
-check_and_get_needs(State, stone_pickaxe, ActionList) :-
-    collect_not_necessary(State, stone_pickaxe, ActionList).
-
-check_and_get_needs(State, stone_pickaxe, ActionList) :-
-    get_needs(State, stone_pickaxe, [], ActionList).
-
-check_and_get_needs(State, stone_axe, ActionList) :-
-    collect_not_necessary(State, stone_axe, ActionList).
-
-check_and_get_needs(State, stone_axe, ActionList) :-
-    get_needs(State, stone_axe, [], ActionList).
-
-check_and_get_needs(State, castle, ActionList) :-
-    collect_not_necessary(State, castle, ActionList).
-
-check_and_get_needs(State, castle, ActionList) :-
-    get_needs(State, castle, [], ActionList).
-
-collect_requirements(State, ItemType, ActionList) :- 
-    check_and_get_needs(State, ItemType, ActionList).
-
-% 5 points
-% find_castle_location(+State, -XMin, -YMin, -XMax, -YMax) :- .
-
-my_tile_occupied(X, Y, State) :-
-    State = [_, StateDict, _],
-    get_dict(_, StateDict, Object),
-    get_dict(x, Object, Ox),
-    get_dict(y, Object, Oy),
-    X = Ox, Y = Oy.
-
-find_castle_location_helper(State, X, Y, Width, Height, XMin, YMin) :-
-    X<Width-1, Y<Height-1,
-    X1 is X+1, X2 is X+2, Y1 is Y+1, Y2 is Y+2,
-    not(my_tile_occupied(X, Y, State)), not(my_tile_occupied(X1, Y, State)), not(my_tile_occupied(X2, Y, State)), 
-    not(my_tile_occupied(X, Y1, State)), not(my_tile_occupied(X1, Y1, State)), not(my_tile_occupied(X2, Y1, State)),
-    not(my_tile_occupied(X, Y2, State)), not(my_tile_occupied(X1, Y2, State)), not(my_tile_occupied(X2, Y2, State)),
-    XMin = X, YMin = Y.
- 
-walk_through_the_map(State, X, Y, Width, Height, XMin, YMin) :-
-    find_castle_location_helper(State, X, Y, Width, Height, XMin, YMin) -> true; (X1 is X+1, find_castle_location_helper(State, X1, Y, Width, Height, XMin, YMin) -> true; (Y1 is Y+1,find_castle_location_helper(State, X, Y1, Width, Height, XMin, YMin))).
-
-walk_through_the_map(State, X, Y, Width, Height, XMin, YMin) :-
-    X<Width-1, Y<Height-1,
-    X1 is X+1, Y1 is Y+1,
-    walk_through_the_map(State, X1, Y1, Width, Height, XMin, YMin).
-
-
-find_castle_location(State, XMin, YMin, XMax, YMax) :-
-    width(W), Width is W-2,
-    height(H), Height is H-2,
-    walk_through_the_map(State, 1, 1, Width, Height, K, L),
-    XMin is K, YMin is L,
-    XMax is XMin+2, YMax is YMin+2.
-
-% 15 points
-% make_castle(+State, -ActionList) :- .
-
-make_castle(State, ActionList) :-
-    check_and_get_needs(State, castle, ActionList2),
-%    write(ActionList2).
-    append([], ActionList2, TempActionList2),
-%    write(TempActionList2).
-    execute_actions(State, TempActionList2, NextState),
-    find_castle_location(NextState, XMin, YMin, XMax, YMax),
-    write(XMin), write(YMin), write(XMax), write(YMax), write(NextState),
-    go_and_place_cobbles(NextState, TempActionList2, ActionList, XMin, YMin, XMax, YMax).
-
-
-
-
-go_and_place_cobbles(State, OldActions, Actions, X, Y, XMax, YMax) :-
-    X=XMax, Y=<YMax,
-    [AgentDict,_,_] = State,
-    get_dict(x, AgentDict, Ax), get_dict(y, AgentDict, Ay),
-    manhattan_distance([X,Y], [Ax, Ay], Dist),
-    navigate_to(State, X, Y, ActionList, Dist),
-    append(OldActions, ActionList, ActionList2),
-    append(ActionList2, [place_c], ActionList3),
-    execute_actions(State, ActionList, NextState),
-    Y1 is Y+1, NewX is X-2, 
-    go_and_place_cobbles(NextState, ActionList3, Actions, NewX, Y1, XMax, YMax).
-
-go_and_place_cobbles(State, OldActions, Actions, X, Y, XMax, YMax) :-
-    X<XMax, Y=<YMax,
-    [AgentDict,_,_] = State,
-    get_dict(x, AgentDict, Ax), get_dict(y, AgentDict, Ay),
-    manhattan_distance([X,Y], [Ax, Ay], Dist),
-    navigate_to(State, X, Y, ActionList, Dist),
-    append(OldActions, ActionList, ActionList2),
-    append(ActionList2, [place_c], ActionList3),
-    execute_actions(State, ActionList, NextState),
-    X1 is X+1, 
-    go_and_place_cobbles(NextState, ActionList3, Actions, X1, Y, XMax, YMax).
-
-go_and_place_cobbles(State, OldActions, Actions, X, Y, XMax, YMax) :-
-    Actions = OldActions. 
-        
-
+% "mine" is the general process of getting 3 cobblestones
+% this can be done by either mining 1 stone or 3 cobblestones
 mine(State, Actions) :-
     (mine_nearest_stone(State, WillAppendActions); (
         mine_nearest_cobblestone(State, Actions1),
@@ -356,3 +182,150 @@ mine(State, Actions) :-
         )
     ),
     append([], WillAppendActions, Actions).
+
+% for stick agent must have 2 logs, hence s/he must chop a tree
+get_needs(State, stick, ActionList, NewCollectActions) :-
+    chop_nearest_tree(State, Actions),
+    append(ActionList, Actions, NewCollectActions).
+
+% for stone_pickaxe, agent must chop 2 trees, craft a stick and then collect 3 cobblestones
+% for cobblestones, the agent can either mine 1 stone or mine 3 cobblestones
+get_needs(State, ItemType, ActionList, NewCollectActions) :-
+    (ItemType = stone_axe; ItemType = stone_pickaxe),
+    chop_nearest_tree(State, Actions),
+    append(ActionList, Actions, ActionList2),
+    execute_actions(State, Actions, NextState),
+    chop_nearest_tree(NextState, Actions2),
+    append(ActionList2, Actions2, ActionList3),
+    append(ActionList3, [craft_stick], ActionList4),
+    execute_actions(NextState, Actions2, NextState2),
+    mine(NextState2, Actions3),
+    append(ActionList4, Actions3, NewCollectActions).
+
+% for a castle, 9 cobblestones are needed
+% these cobblestones can be collected by mining 3 stones or 9 cobblestones
+get_needs(State, castle, ActionList, NewCollectActions) :-
+    mine(State, Actions1),
+    append(ActionList, Actions1, TempActions),
+    execute_actions(State, Actions1, NextState),
+    mine(NextState, Actions2),
+    append(TempActions, Actions2, TempActions2),
+    execute_actions(NextState, Actions2, FinalState),
+    mine(FinalState, Actions3),
+    append(TempActions2, Actions3, NewCollectActions).
+
+% if there are 2 logs in the inventory, there is no need to collect anything for a stick
+% so the ActionList is empty
+collect_not_necessary([AgentDict, _, _], stick, ActionList) :-
+    has(log, 2, AgentDict.inventory),
+    ActionList = [].
+
+% if there are 3 logs, 2 sticks and 3 cobblestones in the inventory, 
+% there is no need to collect anything for a stone_axe or a stone_pickaxe
+% so the ActionList is empty
+collect_not_necessary([AgentDict, _, _], ItemType, ActionList) :-
+    (ItemType = stone_axe; ItemType = stone_pickaxe),
+    has(log, 3, AgentDict.inventory),
+    has(stick, 2, AgentDict.inventory),
+    has(cobblestone, 3, AgentDict.inventory),
+    ActionList = [].
+
+% if there are 9 cobblestones in the inventory, there is no need to collect anything for a castle
+% so the ActionList is empty
+collect_not_necessary([AgentDict, _, _], castle, ActionList) :-
+    has(cobblestone, 9, AgentDict.inventory),
+    ActionList = [].
+
+% if agent already has the required items, the list of actions is empty
+collect_requirements(State, ItemType, ActionList) :-
+    collect_not_necessary(State, ItemType, ActionList).
+
+collect_requirements(State, ItemType, ActionList) :-
+    get_needs(State, ItemType, [], ActionList).
+
+
+% 5 points
+% find_castle_location(+State, -XMin, -YMin, -XMax, -YMax) :- .
+
+% the modified version of the tile_occcupied without the blocking check
+my_tile_occupied(X, Y, State) :-
+    State = [_, StateDict, _],
+    get_dict(_, StateDict, Object),
+    get_dict(x, Object, Ox),
+    get_dict(y, Object, Oy),
+    X = Ox, Y = Oy.
+
+% X and Y are XMin and YMin respectively, if the 9 tiles
+% (X,Y), (X+1,Y), (X+2,Y), (X,Y+1), (X+1,Y+1), (X+2,Y+1), (X,Y+2), (X+1,Y+2), (X+2,Y+2) are not full
+find_castle_location_helper(State, X, Y, Width, Height, XMin, YMin) :-
+    X<Width-1, Y<Height-1,
+    X1 is X+1, X2 is X+2, Y1 is Y+1, Y2 is Y+2,
+    not(my_tile_occupied(X, Y, State)), not(my_tile_occupied(X1, Y, State)), not(my_tile_occupied(X2, Y, State)), 
+    not(my_tile_occupied(X, Y1, State)), not(my_tile_occupied(X1, Y1, State)), not(my_tile_occupied(X2, Y1, State)),
+    not(my_tile_occupied(X, Y2, State)), not(my_tile_occupied(X1, Y2, State)), not(my_tile_occupied(X2, Y2, State)),
+    XMin = X, YMin = Y.
+ 
+% if X and Y cannot be XMin and YMin, then check the other 3x3 tiles one by one
+% first go right and then go down while checking 
+walk_through_the_map(State, X, Y, Width, Height, XMin, YMin) :-
+    find_castle_location_helper(State, X, Y, Width, Height, XMin, YMin) -> 
+        true; 
+        ((X1 is X+1, find_castle_location_helper(State, X1, Y, Width, Height, XMin, YMin)) -> 
+            true; 
+            (Y1 is Y+1,find_castle_location_helper(State, X, Y1, Width, Height, XMin, YMin))
+        ).
+
+% now go diagonal
+walk_through_the_map(State, X, Y, Width, Height, XMin, YMin) :-
+    X<Width-1, Y<Height-1,
+    X1 is X+1, Y1 is Y+1,
+    walk_through_the_map(State, X1, Y1, Width, Height, XMin, YMin).
+
+find_castle_location(State, XMin, YMin, XMax, YMax) :-
+    width(W), Width is W-2,
+    height(H), Height is H-2,
+    walk_through_the_map(State, 1, 1, Width, Height, XMin, YMin),
+    XMax is XMin+2, YMax is YMin+2.
+
+% 15 points
+% make_castle(+State, -ActionList) :- .
+
+make_castle(State, ActionList) :-
+    collect_requirements(State, castle, ActionList2),
+    execute_actions(State, ActionList2, NextState),
+    find_castle_location(NextState, XMin, YMin, XMax, YMax),
+    go_and_place_cobbles(NextState, ActionList2, ActionList, XMin, YMin, XMax, YMax).
+
+% X and Y are the coordinates that a single cobblestone will be placed
+% we need to place 3 cobblestones for each row so if the current coordinate is in the right edge (i.e. =XMax),
+% jumps to the next row by incrementing Y
+go_and_place_cobbles(State, OldActions, Actions, X, Y, XMax, YMax) :-
+    X=XMax, Y=<YMax,
+    [AgentDict,_,_] = State,
+    get_dict(x, AgentDict, Ax), get_dict(y, AgentDict, Ay),
+    manhattan_distance([X,Y], [Ax, Ay], Dist),
+    navigate_to(State, X, Y, ActionList, Dist),
+    append(OldActions, ActionList, ActionList2),
+    append(ActionList2, [place_c], ActionList3),
+    execute_actions(State, ActionList, NextState),
+    Y1 is Y+1, NewX is X-2, 
+    go_and_place_cobbles(NextState, ActionList3, Actions, NewX, Y1, XMax, YMax).
+
+% a row of 3 cobblestones are placed
+go_and_place_cobbles(State, OldActions, Actions, X, Y, XMax, YMax) :-
+    X<XMax, Y=<YMax,
+    [AgentDict,_,_] = State,
+    get_dict(x, AgentDict, Ax), get_dict(y, AgentDict, Ay),
+    manhattan_distance([X,Y], [Ax, Ay], Dist),
+    navigate_to(State, X, Y, ActionList, Dist),
+    append(OldActions, ActionList, ActionList2),
+    append(ActionList2, [place_c], ActionList3),
+    execute_actions(State, ActionList, NextState),
+    X1 is X+1, 
+    go_and_place_cobbles(NextState, ActionList3, Actions, X1, Y, XMax, YMax).
+
+go_and_place_cobbles(_, OldActions, Actions, X, Y, XMax, YMax) :-
+    Xx is XMax-2, Yy is YMax+1,
+    X=Xx, Y=Yy, !,
+    Actions = OldActions.
+        
