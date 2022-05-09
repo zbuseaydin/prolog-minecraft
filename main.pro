@@ -1,4 +1,4 @@
- zeynep buse aydin
+
 % 
 % compiling: yes
 % complete: yes
