@@ -1,22 +1,15 @@
 
-% 
-% compiling: yes
-% complete: yes
 :- ['cmpecraft.pro'].
 
 :- init_from_map.
 
 
-% 10 points
-% manhattan_distance(+A, +B, -Distance) :- .
 manhattan_distance(A, B, Distance) :-
     [X1, Y1] = A,
     [X2, Y2] = B,
     Distance is abs(X1-X2) + abs(Y1-Y2).
 
 
-% 10 points
-% minimum_of_list(+List, -Minimum) :- .
 
 minimum_of_list_helper([], Minimum, Minimum).
 
@@ -33,8 +26,6 @@ minimum_of_list(List, Minimum) :-
 
 
 
-% 10 points
-% find_nearest_type(+State, +ObjectType, -ObjKey, -Object, -Distance) :- .
 find_nearest_type(State, ObjectType, ObjKey, Object, Distance) :- 
     find_nearest_type_helper(State, ObjectType, [], _, _, ObjKey, Object, Distance).
 
@@ -74,8 +65,6 @@ get_object_infos([_|T], [_|T2], ObjectDict, ObjKey, Object, MinDist) :-
     
 
 
-% 10 points
-% navigate_to(+State, +X, +Y, -ActionList, +DepthLimit) :- .
 navigate_to(State, X, Y, ActionList, DepthLimit) :-
     [AgentDict, _, _] = State,
     get_dict(x, AgentDict, AgentX),
@@ -126,8 +115,6 @@ add_action(AgentX, AgentY, X, Y, Actions, Count, DepthLimit, ActionList) :-
     
 
 
-% 10 points
-% chop_nearest_tree(+State, -ActionList) :- .
 chop_nearest_tree(State, ActionList) :- 
     find_nearest_type(State, tree, _, Object, Distance),
     get_dict(x, Object, ObjX), get_dict(y, Object, ObjY),
@@ -136,8 +123,6 @@ chop_nearest_tree(State, ActionList) :-
 
 
 
-% 10 points
-% mine_nearest_stone(+State, -ActionList) :- .
 mine_nearest_stone(State, ActionList) :- 
     find_nearest_type(State, stone, _, Object, Distance),
     get_dict(x, Object, ObjX), get_dict(y, Object, ObjY),
@@ -146,8 +131,6 @@ mine_nearest_stone(State, ActionList) :-
 
 
 
-% 10 points
-% gather_nearest_food(+State, -ActionList) :- .
 gather_nearest_food(State, ActionList) :- 
     find_nearest_type(State, food, _, Object, Distance),
     get_dict(x, Object, ObjX), get_dict(y, Object, ObjY),
@@ -180,9 +163,6 @@ mine(State, Actions) :-
     append([], WillAppendActions, Actions).
 
 
-
-% 10 points
-% collect_requirements(+State, +ItemType, -ActionList) :- .
 
 % if agent already has the required items, the list of actions is empty
 collect_requirements(State, ItemType, ActionList) :-
@@ -246,8 +226,6 @@ get_needs(State, castle, ActionList, NewCollectActions) :-
 
 
 
-% 5 points
-% find_castle_location(+State, -XMin, -YMin, -XMax, -YMax) :- .
 find_castle_location(State, XMin, YMin, XMax, YMax) :-
     width(W), Width is W-2,
     height(H), Height is H-2,
@@ -290,8 +268,6 @@ my_tile_occupied(X, Y, State) :-
 
 
 
-% 15 points
-% make_castle(+State, -ActionList) :- .
 make_castle(State, ActionList) :-
     collect_requirements(State, castle, ActionList2),
     execute_actions(State, ActionList2, NextState),
